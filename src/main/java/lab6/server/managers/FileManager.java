@@ -1,13 +1,11 @@
 ﻿package lab6.server.managers;
 
+import lab6.common.CsvParser;
 import lab6.common.models.*;
 
 import java.io.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
 
 public class FileManager {
     private final String filename;
@@ -23,9 +21,10 @@ public class FileManager {
             System.out.println("Файл не найден, создана пустая коллекция.");
             return cities;
         }
-        try (Scanner scanner = new Scanner(new FileInputStream(file))) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine().trim();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
                 if (line.isEmpty()) continue;
                 try {
                     City city = parseCity(line);
@@ -38,32 +37,8 @@ public class FileManager {
         return cities;
     }
 
-    private String[] parseCsvLine(String line) {
-        List<String> result = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    current.append('"');
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (c == ',' && !inQuotes) {
-                result.add(current.toString());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
-        }
-        result.add(current.toString());
-        return result.toArray(new String[0]);
-    }
-
     private City parseCity(String csvLine) {
-        String[] parts = parseCsvLine(csvLine);
+        String[] parts = CsvParser.parseCsvLine(csvLine);
         if (parts.length != 12) {
             throw new IllegalArgumentException("Неверное количество полей (ожидается 12)");
         }
@@ -95,18 +70,10 @@ public class FileManager {
         }
     }
 
-    private String escapeCsv(String field) {
-        if (field == null) return "";
-        if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
-            return "\"" + field.replace("\"", "\"\"") + "\"";
-        }
-        return field;
-    }
-
     private String cityToCsv(City city) {
         return String.join(",",
                 String.valueOf(city.getId()),
-                escapeCsv(city.getName()),
+                CsvParser.escapeCsv(city.getName()),
                 String.valueOf(city.getCoordinates().getX()),
                 String.valueOf(city.getCoordinates().getY()),
                 city.getCreationDate().toString(),
