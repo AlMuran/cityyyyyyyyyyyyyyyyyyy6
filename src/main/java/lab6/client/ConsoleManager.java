@@ -28,9 +28,14 @@ public class ConsoleManager {
             System.out.print("> ");
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) continue;
+
             String[] parts = line.split("\\s+", 2);
             String command = parts[0];
-            String argument = parts.length > 1 ? parts[1] : null;
+            String argument = null;
+
+            if (parts.length > 1) {
+                argument = parts[1];
+            }
 
             addToHistory(command);
 
@@ -112,7 +117,7 @@ public class ConsoleManager {
                     if (fields.length == 0) continue;
                     String cmd = fields[0];
 
-                    // Поддержка вложенных execute_script
+
                     if (cmd.equals("execute_script")) {
                         if (fields.length != 2) {
                             System.out.println("Ошибка: execute_script требует имя файла.");
