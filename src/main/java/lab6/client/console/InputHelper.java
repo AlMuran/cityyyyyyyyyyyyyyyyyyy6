@@ -1,4 +1,4 @@
-﻿package lab6.client.console;
+package lab6.client.console;
 
 import lab6.common.models.*;
 import java.util.Scanner;

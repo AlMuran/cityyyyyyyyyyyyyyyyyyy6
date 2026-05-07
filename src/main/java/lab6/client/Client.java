@@ -1,4 +1,4 @@
-﻿package lab6.client;
+package lab6.client;
 
 import lab6.common.Response;
 import lab6.common.requests.CommandRequest;

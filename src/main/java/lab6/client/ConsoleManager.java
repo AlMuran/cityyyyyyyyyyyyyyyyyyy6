@@ -1,4 +1,4 @@
-﻿package lab6.client;
+package lab6.client;
 
 import lab6.client.console.InputHelper;
 import lab6.common.CsvParser;
@@ -111,6 +111,17 @@ public class ConsoleManager {
                     String[] fields = CsvParser.parseCsvLine(line);
                     if (fields.length == 0) continue;
                     String cmd = fields[0];
+
+                    // Поддержка вложенных execute_script
+                    if (cmd.equals("execute_script")) {
+                        if (fields.length != 2) {
+                            System.out.println("Ошибка: execute_script требует имя файла.");
+                            continue;
+                        }
+                        executeScript(fields[1]);
+                        continue;
+                    }
+
                     CommandRequest request = buildRequestFromScript(cmd, fields);
                     Response response = client.sendRequest(request);
                     System.out.println(response.getMessage());
@@ -163,7 +174,7 @@ public class ConsoleManager {
                 return new RemoveAnyByCarCodeRequest(carCode);
             }
             default:
-                throw new IllegalArgumentException("Неизвестная команда: " + command);
+                return new UnknownCommandRequest(command, arg);
         }
     }
 

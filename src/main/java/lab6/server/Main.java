@@ -1,4 +1,4 @@
-﻿package lab6.server;
+package lab6.server;
 
 import lab6.server.managers.CollectionManager;
 import lab6.server.managers.FileManager;
@@ -14,13 +14,11 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        // 1. Чтение пути к файлу из переменной окружения
         String filename = System.getenv("CITY_FILE");
         if (filename == null) {
             logger.error("Переменная окружения CITY_FILE не установлена");
             System.exit(1);
         }
-
 
         CollectionManager collectionManager = new CollectionManager();
         FileManager fileManager = new FileManager(filename);
@@ -47,7 +45,7 @@ public class Main {
         }));
 
 
-        Thread saveCommandThread = new Thread(() -> {
+        Thread serverCommandThread = new Thread(() -> {
             try (Scanner scanner = new Scanner(System.in)) {
                 while (true) {
                     String line = scanner.nextLine().trim();
@@ -58,14 +56,26 @@ public class Main {
                         } catch (IOException e) {
                             logger.error("Ошибка сохранения по команде save: {}", e.getMessage());
                         }
+                    } else if (line.equalsIgnoreCase("exit")) {
+                        logger.info("Получена команда exit, завершение сервера...");
+                        try {
+                            fileManager.save(collectionManager.getCities());
+                            logger.info("Коллекция сохранена перед выходом.");
+                        } catch (IOException e) {
+                            logger.error("Ошибка сохранения при exit: {}", e.getMessage());
+                        }
+                        System.exit(0);
+                    } else {
+                        System.out.println("Нет такой команды, бебебе.\nесть только save и exit");
+                        logger.warn("Неизвестная серверная команда: {}", line);
                     }
                 }
             }
         });
-        saveCommandThread.setDaemon(true);
-        saveCommandThread.start();
+        serverCommandThread.setDaemon(true);
+        serverCommandThread.start();
 
-        int port = 8080;
+        int port = 5555;
         if (args.length > 0) {
             try {
                 port = Integer.parseInt(args[0]);

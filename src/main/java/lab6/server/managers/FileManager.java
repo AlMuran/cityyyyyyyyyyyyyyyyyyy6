@@ -1,4 +1,4 @@
-﻿package lab6.server.managers;
+package lab6.server.managers;
 
 import lab6.common.CsvParser;
 import lab6.common.models.*;

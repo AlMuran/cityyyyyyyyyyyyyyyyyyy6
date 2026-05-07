@@ -1,4 +1,4 @@
-﻿package lab6.common.requests;
+package lab6.common.requests;
 
 import java.io.Serializable;
 

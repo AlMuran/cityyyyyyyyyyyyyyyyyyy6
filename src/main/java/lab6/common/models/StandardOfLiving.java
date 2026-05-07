@@ -1,4 +1,4 @@
-﻿package lab6.common.models;
+package lab6.common.models;
 
 import java.io.Serializable;
 

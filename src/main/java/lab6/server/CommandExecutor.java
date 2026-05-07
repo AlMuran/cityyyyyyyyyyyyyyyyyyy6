@@ -1,10 +1,11 @@
-﻿package lab6.server;
+package lab6.server;
 
 import lab6.common.Response;
 import lab6.common.requests.*;
 import lab6.common.models.City;
 import lab6.server.managers.CollectionManager;
 import lab6.server.managers.FileManager;
+import lab6.common.requests.UnknownCommandRequest;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,6 +21,7 @@ public class CommandExecutor {
     }
 
     public Response execute(CommandRequest request) {
+        if (request instanceof UnknownCommandRequest){ return new Response(false, "Нет такой команды, бебебе.\nВведите help.", null);}
         if (request instanceof AddRequest) return handleAdd((AddRequest) request);
         if (request instanceof UpdateRequest) return handleUpdate((UpdateRequest) request);
         if (request instanceof RemoveByIdRequest) return handleRemoveById((RemoveByIdRequest) request);

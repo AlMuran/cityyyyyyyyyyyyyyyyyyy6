@@ -1,9 +1,9 @@
-﻿package lab6.client;
+package lab6.client;
 
 public class Main {
     public static void main(String[] args) {
         String host = "localhost";
-        int port = 8080;
+        int port = 5555;
 
         if (args.length >= 1) {
             host = args[0];
@@ -12,7 +12,7 @@ public class Main {
             try {
                 port = Integer.parseInt(args[1]);
             } catch (NumberFormatException e) {
-                System.err.println("Неверный порт, используется порт по умолчанию 8080");
+                System.err.println("Неверный порт, используется порт по умолчанию 5555");
             }
         }
 

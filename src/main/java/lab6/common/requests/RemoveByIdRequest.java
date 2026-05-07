@@ -1,4 +1,4 @@
-﻿package lab6.common.requests;
+package lab6.common.requests;
 
 public class RemoveByIdRequest implements CommandRequest {
     private final long id;
