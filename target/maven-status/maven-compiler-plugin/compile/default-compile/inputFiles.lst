@@ -19,6 +19,7 @@ D:\java\lab6\src\main\java\lab6\common\requests\RemoveAnyByCarCodeRequest.java
 D:\java\lab6\src\main\java\lab6\common\requests\RemoveByIdRequest.java
 D:\java\lab6\src\main\java\lab6\common\requests\RemoveLowerRequest.java
 D:\java\lab6\src\main\java\lab6\common\requests\ShowRequest.java
+D:\java\lab6\src\main\java\lab6\common\requests\UnknownCommandRequest.java
 D:\java\lab6\src\main\java\lab6\common\requests\UpdateRequest.java
 D:\java\lab6\src\main\java\lab6\common\Response.java
 D:\java\lab6\src\main\java\lab6\server\CommandExecutor.java

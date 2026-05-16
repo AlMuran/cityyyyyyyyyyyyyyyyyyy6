@@ -26,3 +26,4 @@ lab6\common\models\City.class
 lab6\common\requests\RemoveLowerRequest.class
 lab6\common\models\StandardOfLiving.class
 lab6\common\requests\ClearRequest.class
+lab6\common\requests\UnknownCommandRequest.class

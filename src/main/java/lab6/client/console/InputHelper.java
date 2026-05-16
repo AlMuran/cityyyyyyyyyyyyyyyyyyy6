@@ -2,10 +2,16 @@ package lab6.client.console;
 
 import lab6.common.models.*;
 import java.util.Scanner;
-
+/**
+ * Вспомогательный класс для чтения данных города с консоли с проверкой корректности.
+ * Содержит приватные методы для чтения строк, чисел, перечислений с повторными запросами при ошибках.
+ */
 public class InputHelper {
     private final Scanner scanner;
-
+    /**
+     * Создаёт помощник ввода.
+     * @param scanner источник ввода (обычно {@code System.in})
+     */
     public InputHelper(Scanner scanner) {
         this.scanner = scanner;
     }
@@ -121,7 +127,13 @@ public class InputHelper {
             }
         }
     }
-
+    /**
+     * Читает с консоли все поля города и возвращает готовый объект {@link City}.
+     * Поля: название, координаты (x>0, y≤793), площадь (>0), население (>0),
+     * высота над уровнем моря (целое), carCode (1..1000), климат, уровень жизни,
+     * рост губернатора (опционально, >0).
+     * @return новый город, созданный на основе введённых данных
+     */
     public City readCityForAdd() {
         String name = readNonEmptyString("Введите название города: ");
         System.out.println("Ввод координат:");

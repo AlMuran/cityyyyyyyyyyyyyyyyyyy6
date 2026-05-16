@@ -1,0 +1,8 @@
+﻿info
+show
+add,Москва,10,55.75,2511.0,12500000,156,777,RAIN_FOREST,HIGH,180.5
+add_if_max,Санкт-Петербург,15,59.93,1439.0,5400000,13,78,MEDITERRANIAN,MEDIUM,175.0
+remove_by_id,1
+remove_any_by_car_code,78
+min_by_coordinates
+print_field_descending_meters_above_sea_level

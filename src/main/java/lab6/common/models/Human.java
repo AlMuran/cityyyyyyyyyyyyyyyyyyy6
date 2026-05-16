@@ -19,8 +19,10 @@ public class Human implements Serializable {
 
     @Override
     public String toString() {
-        return "Human{" +
-                "height=" + (height != null ? height : "не указан") +
-                '}';
+        if (height != null) {
+            return "Human{height=" + height + "}";
+        } else {
+            return "Human{height=не указан}";
+        }
     }
 }
