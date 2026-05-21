@@ -10,9 +10,67 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Scanner;
 
+/**
+ * Главный класс серверного приложения.
+ *
+ * <p>Точка входа в серверную часть приложения. Отвечает за:
+ * <ul>
+ *   <li>Чтение переменной окружения CITY_FILE с путём к файлу данных</li>
+ *   <li>Загрузку коллекции из файла при старте</li>
+ *   <li>Установку хука для автоматического сохранения при завершении</li>
+ *   <li>Запуск консольного потока для команд save и exit</li>
+ *   <li>Запуск UDP-сервера на указанном порту</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Переменные окружения:
+ * <ul>
+ *   <li><strong>CITY_FILE</strong> - путь к CSV-файлу с данными городов (обязательна)</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Аргументы командной строки:
+ * <ul>
+ *   <li><strong>args[0]</strong> - порт сервера (по умолчанию 5555)</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Команды серверной консоли:
+ * <ul>
+ *   <li><strong>save</strong> - принудительное сохранение коллекции в файл</li>
+ *   <li><strong>exit</strong> - сохранение коллекции и завершение сервера</li>
+ * </ul>
+ * </p>
+ *
+ * @author AlMuran
+ * @version 1.0
+ * @since 1.0
+ * @see Server
+ * @see CommandExecutor
+ * @see CollectionManager
+ * @see FileManager
+ */
 public class Main {
+
+    /** Логгер для записи событий сервера */
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    /**
+     * Точка входа в серверное приложение.
+     *
+     * <p>Последовательность действий:
+     * <ol>
+     *   <li>Проверяет наличие переменной окружения CITY_FILE</li>
+     *   <li>Создаёт менеджеры коллекции и файлов</li>
+     *   <li>Загружает города из файла (если файл существует)</li>
+     *   <li>Устанавливает хук для сохранения при завершении</li>
+     *   <li>Запускает поток для обработки серверных команд (save/exit)</li>
+     *   <li>Создаёт исполнитель команд и запускает UDP-сервер</li>
+     * </ol>
+     * </p>
+     *
+     * @param args аргументы командной строки (порт сервера)
+     */
     public static void main(String[] args) {
         String filename = System.getenv("CITY_FILE");
         if (filename == null) {
@@ -34,7 +92,6 @@ public class Main {
             logger.info("Начинаем с пустой коллекции");
         }
 
-
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 fileManager.save(collectionManager.getCities());
@@ -43,7 +100,6 @@ public class Main {
                 logger.error("Ошибка сохранения коллекции при завершении: {}", e.getMessage());
             }
         }));
-
 
         Thread serverCommandThread = new Thread(() -> {
             try (Scanner scanner = new Scanner(System.in)) {
@@ -74,6 +130,7 @@ public class Main {
         });
         serverCommandThread.setDaemon(true);
         serverCommandThread.start();
+
 
         int port = 5555;
         if (args.length > 0) {

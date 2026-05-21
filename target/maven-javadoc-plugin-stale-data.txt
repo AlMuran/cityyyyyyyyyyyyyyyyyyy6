@@ -1,0 +1,58 @@
+@options
+@packages
+-classpath
+'C:/Users/Home/.m2/repository/ch/qos/logback/logback-classic/1.4.14/logback-classic-1.4.14.jar;C:/Users/Home/.m2/repository/ch/qos/logback/logback-core/1.4.14/logback-core-1.4.14.jar;C:/Users/Home/.m2/repository/org/slf4j/slf4j-api/2.0.7/slf4j-api-2.0.7.jar'
+-encoding
+'UTF-8'
+-public
+-source
+'17'
+-sourcepath
+'D:/java/lab6/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'D:/java/lab6/target/site/apidocs'
+-docencoding
+'UTF-8'
+-Xdoclint:none
+-doctitle
+'lab6 1.0-SNAPSHOT API'
+-link
+'https://docs.oracle.com/en/java/javase/17/docs/api'
+-nohelp
+-use
+-version
+-windowtitle
+'lab6 1.0-SNAPSHOT API'
+lab6.client
+lab6.client.console
+lab6.common
+lab6.common.models
+lab6.common.requests
+lab6.server
+lab6.server.managers
+C:\Users\Home\.m2\repository\ch\qos\logback\logback-classic\1.4.14\logback-classic-1.4.14.jar = 1778088121355
+C:\Users\Home\.m2\repository\ch\qos\logback\logback-core\1.4.14\logback-core-1.4.14.jar = 1778088121444
+C:\Users\Home\.m2\repository\org\slf4j\slf4j-api\2.0.7\slf4j-api-2.0.7.jar = 1778088121363
+D:\java\lab6\src\main\java = 1777819553848
+D:\java\lab6\target\site\apidocs\allclasses-index.html = 1779363098223
+D:\java\lab6\target\site\apidocs\allpackages-index.html = 1779363098226
+D:\java\lab6\target\site\apidocs\element-list = 1779363097911
+D:\java\lab6\target\site\apidocs\index-all.html = 1779363098253
+D:\java\lab6\target\site\apidocs\index.html = 1779363098191
+D:\java\lab6\target\site\apidocs\jquery-ui.overrides.css = 1779363098282
+D:\java\lab6\target\site\apidocs\member-search-index.js = 1779363098229
+D:\java\lab6\target\site\apidocs\module-search-index.js = 1779363098226
+D:\java\lab6\target\site\apidocs\overview-summary.html = 1779363098257
+D:\java\lab6\target\site\apidocs\overview-tree.html = 1779363098187
+D:\java\lab6\target\site\apidocs\package-search-index.js = 1779363098227
+D:\java\lab6\target\site\apidocs\script.js = 1779363098268
+D:\java\lab6\target\site\apidocs\search.js = 1779363098270
+D:\java\lab6\target\site\apidocs\serialized-form.html = 1779363098040
+D:\java\lab6\target\site\apidocs\stylesheet.css = 1779363098267
+D:\java\lab6\target\site\apidocs\tag-search-index.js = 1779363098229
+D:\java\lab6\target\site\apidocs\type-search-index.js = 1779363098228
