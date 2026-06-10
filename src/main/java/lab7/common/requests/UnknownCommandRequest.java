@@ -1,31 +1,24 @@
 package lab7.common.requests;
 
+import lab7.common.Response;
+import lab7.server.managers.CollectionManager;
+
 /**
  * Запрос для неизвестной команды.
- *
- * <p>Создаётся клиентом, когда пользователь ввёл команду,
- * которая не распознана. Содержит название команды и её аргумент
- * для возможной обработки или логирования.</p>
- *
+ * Возвращает сообщение об ошибке с предложением ввести help.
  * @author AlMuran
  * @version 1.0
- * @since 1.0
- * @see CommandRequest
- * @see lab7.server.CommandExecutor#execute(CommandRequest)
  */
 public class UnknownCommandRequest extends AuthenticatedRequest {
-
-    /** Название неизвестной команды */
     private final String commandName;
-
-    /** Аргумент команды (может быть null) */
     private final String argument;
 
     /**
-     * Создаёт запрос для неизвестной команды.
-     *
-     * @param commandName название команды, которую не распознали
+     * Конструктор запроса неизвестной команды.
+     * @param commandName название неизвестной команды
      * @param argument аргумент команды (может быть null)
+     * @param login логин пользователя
+     * @param password пароль пользователя
      */
     public UnknownCommandRequest(String commandName, String argument, String login, String password) {
         super(login, password);
@@ -33,21 +26,19 @@ public class UnknownCommandRequest extends AuthenticatedRequest {
         this.argument = argument;
     }
 
-    /**
-     * Возвращает название неизвестной команды.
-     *
-     * @return название команды
-     */
-    public String getCommandName() {
-        return commandName;
-    }
+    /** @return название неизвестной команды */
+    public String getCommandName() { return commandName; }
 
-    /**
-     * Возвращает аргумент команды.
-     *
-     * @return аргумент (может быть null)
-     */
-    public String getArgument() {
-        return argument;
+    /** @return аргумент команды (может быть null) */
+    public String getArgument() { return argument; }
+
+    @Override
+    public Response execute(CollectionManager collectionManager, long userId) {
+        if ("exit".equalsIgnoreCase(commandName)) {
+            // Завершаем сервер
+            System.exit(0);
+            return new Response(true, "Сервер остановлен", null);
+        }
+        return new Response(false, "бебебе нет такой команды: " + commandName, null);
     }
 }

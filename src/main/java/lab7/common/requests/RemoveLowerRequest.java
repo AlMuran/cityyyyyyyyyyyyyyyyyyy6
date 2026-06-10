@@ -1,41 +1,35 @@
 package lab7.common.requests;
 
+import lab7.common.Response;
 import lab7.common.models.City;
+import lab7.server.managers.CollectionManager;
 
 /**
- * Запрос на удаление всех городов, меньших заданного эталона.
- *
- * <p>Содержит эталонный город {@link City}, с которым сравниваются
- * все города в коллекции. Города, меньшие эталона (согласно методу
- * {@link City#compareTo(City)}), будут удалены.</p>
- *
+ * Запрос на удаление всех городов, которые меньше заданного эталона.
+ * Удаляются только города текущего пользователя.
  * @author AlMuran
  * @version 1.0
- * @since 1.0
- * @see CommandRequest
- * @see lab7.server.CommandExecutor
  */
 public class RemoveLowerRequest extends AuthenticatedRequest {
-
-    /** Эталонный город для сравнения */
     private final City reference;
 
     /**
-     * Создаёт запрос на удаление меньших городов.
-     *
-     * @param reference эталонный город (города меньше этого будут удалены)
+     * Конструктор запроса на удаление меньших.
+     * @param reference эталонный город для сравнения
+     * @param login логин пользователя
+     * @param password пароль пользователя
      */
     public RemoveLowerRequest(City reference, String login, String password) {
         super(login, password);
         this.reference = reference;
     }
 
-    /**
-     * Возвращает эталонный город.
-     *
-     * @return объект {@link City} для сравнения
-     */
-    public City getReference() {
-        return reference;
+    /** @return эталонный город */
+    public City getReference() { return reference; }
+
+    @Override
+    public Response execute(CollectionManager collectionManager, long userId) {
+        int removed = collectionManager.removeLowerThan(reference, userId);
+        return new Response(true, "Удалено городов: " + removed, null);
     }
 }

@@ -1,32 +1,25 @@
 package lab7.common.requests;
 
+import lab7.common.Response;
 import lab7.common.models.City;
+import lab7.server.managers.CollectionManager;
 
 /**
- * Запрос на обновление существующего города в коллекции.
- *
- * <p>Содержит идентификатор города, который нужно обновить,
- * и новый объект {@link City} с обновлёнными данными.</p>
- *
+ * Запрос на обновление существующего города.
+ * Город может обновить только его создатель.
  * @author AlMuran
  * @version 1.0
- * @since 1.0
- * @see CommandRequest
- * @see lab7.server.CommandExecutor
  */
 public class UpdateRequest extends AuthenticatedRequest {
-
-    /** Идентификатор города, который нужно обновить */
     private final long id;
-
-    /** Новые данные города */
     private final City city;
 
     /**
-     * Создаёт запрос на обновление города.
-     *
-     * @param id идентификатор существующего города
-     * @param city новый объект города с обновлёнными данными
+     * Конструктор запроса на обновление.
+     * @param id идентификатор обновляемого города
+     * @param city новые данные города
+     * @param login логин пользователя
+     * @param password пароль пользователя
      */
     public UpdateRequest(long id, City city, String login, String password) {
         super(login, password);
@@ -34,21 +27,20 @@ public class UpdateRequest extends AuthenticatedRequest {
         this.city = city;
     }
 
-    /**
-     * Возвращает идентификатор города для обновления.
-     *
-     * @return id города
-     */
-    public long getId() {
-        return id;
-    }
+    /** @return идентификатор обновляемого города */
+    public long getId() { return id; }
 
-    /**
-     * Возвращает новые данные города.
-     *
-     * @return объект {@link City} с обновлёнными данными
-     */
-    public City getCity() {
-        return city;
+    /** @return новые данные города */
+    public City getCity() { return city; }
+
+    @Override
+    public Response execute(CollectionManager collectionManager, long userId) {
+        try {
+            city.setId(id);
+            collectionManager.updateCity(city, userId);
+            return new Response(true, "Город с ID " + id + " обновлён", null);
+        } catch (Exception e) {
+            return new Response(false, "Ошибка: " + e.getMessage(), null);
+        }
     }
 }

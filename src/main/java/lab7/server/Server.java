@@ -6,135 +6,95 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.InetSocketAddress;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- * UDP-сервер для обработки запросов клиентов.
- *
- * <p>Сервер работает в неблокирующем режиме с использованием {@link DatagramChannel}
- * и {@link Selector}. Это позволяет обрабатывать несколько клиентов одновременно
- * в одном потоке.</p>
- *
- * <p>Алгоритм работы:
- * <ol>
- *   <li>Открывается DatagramChannel в неблокирующем режиме</li>
- *   <li>Канал привязывается к указанному порту</li>
- *   <li>Создаётся Selector для отслеживания событий</li>
- *   <li>В бесконечном цикле ожидаются входящие пакеты</li>
- *   <li>Каждый полученный запрос десериализуется и передаётся в CommandExecutor</li>
- *   <li>Результат выполнения сериализуется и отправляется обратно клиенту</li>
- * </ol>
- * </p>
- *
+ * UDP сервер для приёма и обработки запросов от клиентов.
+ * Многопоточность: Thread (чтение) -> CachedThreadPool (обработка) -> FixedThreadPool (отправка)
  * @author AlMuran
  * @version 1.0
- * @since 1.0
- * @see CommandExecutor
- * @see CommandRequest
- * @see Response
  */
 public class Server {
-
-    /** Логгер для записи событий сервера */
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
-
-    /** Порт, на котором сервер слушает запросы */
     private final int port;
-
-    /** Исполнитель команд (обрабатывает логику команд) */
     private final CommandExecutor executor;
-
-    /** Флаг работы сервера (true - работает, false - остановлен) */
     private volatile boolean running = true;
 
-    /**
-     * Создаёт сервер с указанным портом и исполнителем команд.
-     *
-     * @param port порт для прослушивания (должен быть от 0 до 65535)
-     * @param executor объект, выполняющий команды
-     */
+    private final ExecutorService cachedPool = Executors.newCachedThreadPool();
+    private final ExecutorService fixedPool = Executors.newFixedThreadPool(10);
+
     public Server(int port, CommandExecutor executor) {
         this.port = port;
         this.executor = executor;
     }
 
     /**
-     * Запускает сервер и начинает обработку входящих запросов.
-     *
-     * <p>Метод работает в бесконечном цикле, ожидая входящие UDP-пакеты.
-     * Для остановки сервера нужно вызвать {@link #stop()}.</p>
-     *
-     * <p>Максимальный размер UDP-пакета: 65507 байт.</p>
-     *
-     * @throws IOException если не удалось открыть порт, создать канал или селектор
+     * Запускает сервер и начинает прослушивание порта.
+     * @throws IOException если не удалось открыть сокет
      */
     public void start() throws IOException {
-        DatagramChannel channel = DatagramChannel.open();
-        channel.configureBlocking(false);
-        channel.bind(new InetSocketAddress(port));
-        Selector selector = Selector.open();
-        channel.register(selector, SelectionKey.OP_READ);
+        DatagramSocket socket = new DatagramSocket(port);
         logger.info("Сервер запущен на порту {}", port);
 
         while (running) {
-            selector.select(100);
-            Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-            while (keys.hasNext()) {
-                SelectionKey key = keys.next();
-                keys.remove();
-                if (!key.isValid()) continue;
-                if (key.isReadable()) {
-                    DatagramChannel ch = (DatagramChannel) key.channel();
-                    ByteBuffer buffer = ByteBuffer.allocate(65507);
-                    SocketAddress clientAddr = ch.receive(buffer);
-                    if (clientAddr != null) {
-                        buffer.flip();
-                        byte[] data = new byte[buffer.remaining()];
-                        buffer.get(data);
-                        logger.debug("Получено {} байт от {}", data.length, clientAddr);
-                        try {
-                            CommandRequest request = (CommandRequest) deserialize(data);
-                            logger.info("Запрос: {} от {}", request.getClass().getSimpleName(), clientAddr);
-                            Response response = executor.execute(request);
-                            byte[] respData = serialize(response);
-                            ch.send(ByteBuffer.wrap(respData), clientAddr);
-                            logger.debug("Отправлен ответ клиенту {}", clientAddr);
-                        } catch (Exception e) {
-                            logger.error("Ошибка обработки запроса от {}: {}", clientAddr, e.getMessage());
-                            Response errorResp = new Response(false, "Ошибка сервера: " + e.getMessage(), null);
-                            byte[] errData = serialize(errorResp);
-                            ch.send(ByteBuffer.wrap(errData), clientAddr);
-                        }
+            byte[] buffer = new byte[65507];
+            DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
+            socket.receive(receivePacket);
+
+
+            new Thread(() -> {
+                byte[] data = Arrays.copyOf(receivePacket.getData(), receivePacket.getLength());
+                SocketAddress clientAddress = receivePacket.getSocketAddress();
+
+
+                cachedPool.submit(() -> {
+                    try {
+                        CommandRequest request = (CommandRequest) deserialize(data);
+                        Response response = executor.execute(request);
+
+
+                        fixedPool.submit(() -> {
+                            try {
+                                byte[] respData = serialize(response);
+                                DatagramPacket sendPacket = new DatagramPacket(respData, respData.length, clientAddress);
+                                socket.send(sendPacket);
+                                logger.debug("Ответ отправлен клиенту {}", clientAddress);
+                            } catch (IOException e) {
+                                logger.error("Ошибка отправки ответа: {}", e.getMessage());
+                            }
+                        });
+                    } catch (Exception e) {
+                        logger.error("Ошибка обработки запроса: {}", e.getMessage());
+                        fixedPool.submit(() -> {
+                            try {
+                                Response errorResp = new Response(false, "Ошибка сервера: " + e.getMessage(), null);
+                                byte[] errData = serialize(errorResp);
+                                DatagramPacket errPacket = new DatagramPacket(errData, errData.length, clientAddress);
+                                socket.send(errPacket);
+                            } catch (IOException ex) {
+                                logger.error("Ошибка отправки ошибки: {}", ex.getMessage());
+                            }
+                        });
                     }
-                }
-            }
+                });
+            }).start();
         }
-        channel.close();
-        selector.close();
-        logger.info("Сервер остановлен");
+        socket.close();
+        shutdown();
     }
 
     /**
      * Останавливает сервер.
-     * <p>Устанавливает флаг running в false, что приводит к выходу из основного цикла.</p>
      */
     public void stop() {
         running = false;
     }
 
-    /**
-     * Сериализует объект в массив байтов.
-     *
-     * @param obj объект для сериализации (должен реализовывать Serializable)
-     * @return массив байтов
-     * @throws IOException при ошибке сериализации
-     */
     private byte[] serialize(Object obj) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(baos)) {
@@ -143,18 +103,16 @@ public class Server {
         }
     }
 
-    /**
-     * Десериализует объект из массива байтов.
-     *
-     * @param data массив байтов для десериализации
-     * @return восстановленный объект
-     * @throws IOException при ошибке чтения
-     * @throws ClassNotFoundException если класс объекта не найден
-     */
     private Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(data);
              ObjectInputStream ois = new ObjectInputStream(bais)) {
             return ois.readObject();
         }
+    }
+
+    private void shutdown() {
+        cachedPool.shutdown();
+        fixedPool.shutdown();
+        logger.info("Сервер остановлен");
     }
 }

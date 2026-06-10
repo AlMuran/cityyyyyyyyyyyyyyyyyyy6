@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>lab6</groupId>
+    <groupId>lab7</groupId>
     <artifactId>lab7</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -16,33 +16,43 @@
     </properties>
 
     <dependencies>
+        <!-- PostgreSQL driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.3</version>
         </dependency>
 
+        <!-- HikariCP connection pool -->
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>5.1.0</version>
         </dependency>
 
+        <!-- Logback (логирование) -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.4.14</version>
         </dependency>
+
+        <!-- SLF4J API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.6.0</version>
                 <executions>
+                    <!-- Сборка клиента -->
                     <execution>
                         <id>client</id>
                         <phase>package</phase>
@@ -62,7 +72,8 @@
                             <appendAssemblyId>true</appendAssemblyId>
                         </configuration>
                     </execution>
-                    <!-- Сервер -->
+
+                    <!-- Сборка сервера -->
                     <execution>
                         <id>server</id>
                         <phase>package</phase>
@@ -81,36 +92,6 @@
                             <finalName>lab7-server</finalName>
                             <appendAssemblyId>true</appendAssemblyId>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.0</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <charset>UTF-8</charset>
-                    <docencoding>UTF-8</docencoding>
-                    <source>17</source>
-                    <show>public</show>
-                    <author>true</author>
-                    <version>true</version>
-                    <use>true</use>
-                    <nohelp>true</nohelp>
-                    <doclint>none</doclint>
-                    <links>
-                        <link>https://docs.oracle.com/en/java/javase/17/docs/api/</link>
-                    </links>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>generate-javadoc</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
                     </execution>
                 </executions>
             </plugin>

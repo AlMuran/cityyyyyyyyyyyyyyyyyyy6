@@ -10,63 +10,51 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Управляет интерактивным взаимодействием с пользователем через консоль.
- * <p>
- * Основные возможности:
- * <ul>
- *   <li>Чтение команд пользователя из консоли</li>
- *   <li>Хранение истории последних 6 команд</li>
- *   <li>Выполнение скриптов из файлов (с поддержкой CSV формата)</li>
- *   <li>Преобразование ввода в объекты CommandRequest</li>
- *   <li>Отправка запросов на сервер через UDP-клиента</li>
- *   <li>Вывод результатов выполнения команд</li>
- * </ul>
- * </p>
- *
+ * Управление консольным интерфейсом клиента.
  * @author AlMuran
  * @version 1.0
- * @since 1.0
- * @see Client
- * @see InputHelper
- * @see CommandRequest
  */
 public class ConsoleManager {
-
-    /** Клиент для отправки запросов на сервер */
     private final Client client;
-
-    /** Помощник для чтения ввода пользователя */
     private final InputHelper inputHelper;
-
-    /** История последних 6 команд */
     private final Deque<String> history = new ArrayDeque<>(6);
-
-    /** Множество выполняющихся скриптов для предотвращения рекурсии */
     private final Set<String> executingScripts = new HashSet<>();
-
-    /** Сканер для чтения ввода с консоли */
     private final Scanner scanner;
 
-    /**
-     * Создаёт консольный менеджер с указанным клиентом.
-     *
-     * @param client экземпляр UDP-клиента для отправки запросов
-     */
+    private String currentLogin = null;
+    private String currentPassword = null;
+    private boolean authenticated = false;
+
     public ConsoleManager(Client client) {
         this.client = client;
         this.scanner = new Scanner(System.in);
         this.inputHelper = new InputHelper(scanner);
     }
 
-    /**
-     * Запускает главный цикл чтения и обработки команд.
-     * <p>
-     * Метод работает в бесконечном цикле, пока пользователь не введёт "exit".
-     * Каждая команда обрабатывается и отправляется на сервер.
-     * </p>
-     */
+    /** Запускает основной цикл консольного интерфейса. */
     public void start() {
-        System.out.println("Клиент запущен. Введите 'help' для списка команд.");
+        System.out.println("Клиент запущен. Сначала выполните вход или регистрацию.");
+
+        while (!authenticated) {
+            System.out.print("Введите команду (login / register / exit): ");
+            String line = scanner.nextLine().trim();
+            if (line.equalsIgnoreCase("exit")) {
+                System.out.println("Завершение клиента.");
+                client.close();
+                scanner.close();
+                System.exit(0);
+            } else if (line.equalsIgnoreCase("login")) {
+                doLogin();
+            } else if (line.equalsIgnoreCase("register")) {
+                doRegister();
+            } else {
+                System.out.println("Необходимо сначала выполнить login или register");
+            }
+        }
+
+        System.out.println("Добро пожаловать, " + currentLogin + "!");
+        System.out.println("Введите 'help' для списка команд.");
+
         while (true) {
             System.out.print("> ");
             String line = scanner.nextLine().trim();
@@ -74,11 +62,7 @@ public class ConsoleManager {
 
             String[] parts = line.split("\\s+", 2);
             String command = parts[0];
-            String argument = null;
-
-            if (parts.length > 1) {
-                argument = parts[1];
-            }
+            String argument = (parts.length > 1) ? parts[1] : null;
 
             addToHistory(command);
 
@@ -90,14 +74,19 @@ public class ConsoleManager {
             } else if (command.equals("history")) {
                 printHistory();
             } else if (command.equals("execute_script")) {
-                if (argument == null) System.out.println("Ошибка: укажите имя файла.");
-                else executeScript(argument);
+                if (argument == null) {
+                    System.out.println("Ошибка: укажите имя файла.");
+                } else {
+                    executeScript(argument);
+                }
             } else {
                 try {
-                    CommandRequest request = buildRequestFromUserInput(command, argument);
+                    CommandRequest request = buildRequest(command, argument);
                     Response response = client.sendRequest(request);
                     System.out.println(response.getMessage());
-                    if (response.getData() != null) printData(response.getData());
+                    if (response.getData() != null) {
+                        printData(response.getData());
+                    }
                 } catch (Exception e) {
                     System.out.println("Ошибка: " + e.getMessage());
                 }
@@ -107,55 +96,136 @@ public class ConsoleManager {
         scanner.close();
     }
 
-    /**
-     * Добавляет команду в историю, сохраняя не более 6 последних.
-     *
-     * @param cmd команда для сохранения
-     */
+    private void doLogin() {
+        System.out.print("Логин: ");
+        String login = scanner.nextLine().trim();
+        System.out.print("Пароль: ");
+        String password = scanner.nextLine().trim();
+        try {
+            LoginRequest request = new LoginRequest(login, password);
+            Response response = client.sendRequest(request);
+            if (response.isSuccess()) {
+                currentLogin = login;
+                currentPassword = password;
+                authenticated = true;
+                System.out.println("Успешный вход.");
+            } else {
+                System.out.println("Ошибка входа: " + response.getMessage());
+            }
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private void doRegister() {
+        System.out.print("Логин: ");
+        String login = scanner.nextLine().trim();
+        System.out.print("Пароль: ");
+        String password = scanner.nextLine().trim();
+        try {
+            RegisterRequest request = new RegisterRequest(login, password);
+            Response response = client.sendRequest(request);
+            if (response.isSuccess()) {
+                System.out.println("Регистрация успешна. Теперь выполните вход.");
+            } else {
+                System.out.println("Ошибка регистрации: " + response.getMessage());
+            }
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
     private void addToHistory(String cmd) {
         if (history.size() == 6) history.pollFirst();
         history.addLast(cmd);
     }
 
-    /**
-     * Выводит список доступных команд с кратким описанием.
-     */
     private void printHelp() {
         System.out.println("Доступные команды:");
-        System.out.println("  help                           : вывести справку");
-        System.out.println("  history                        : показать последние 6 команд");
-        System.out.println("  execute_script <file>          : выполнить скрипт (CSV с экранированием)");
-        System.out.println("  exit                           : завершить клиент");
-        System.out.println("  info                           : информация о коллекции");
-        System.out.println("  show                           : показать все элементы");
-        System.out.println("  add                            : добавить город");
-        System.out.println("  update <id>                    : обновить город по id");
-        System.out.println("  remove_by_id <id>              : удалить по id");
-        System.out.println("  clear                          : очистить коллекцию");
-        System.out.println("  add_if_max                     : добавить, если больше максимального");
-        System.out.println("  remove_lower                   : удалить все меньшие заданного");
-        System.out.println("  remove_any_by_car_code <code>  : удалить город с указанным carCode");
-        System.out.println("  min_by_coordinates             : город с минимальной координатой X");
-        System.out.println("  print_field_descending_meters_above_sea_level : высоты в порядке убывания");
+        System.out.println("  help                           - справка");
+        System.out.println("  history                        - последние 6 команд");
+        System.out.println("  execute_script <file>          - выполнить скрипт");
+        System.out.println("  exit                           - завершить клиент");
+        System.out.println("  info                           - информация о коллекции");
+        System.out.println("  show                           - показать все элементы");
+        System.out.println("  add                            - добавить город");
+        System.out.println("  update <id>                    - обновить город по id");
+        System.out.println("  remove_by_id <id>              - удалить по id");
+        System.out.println("  clear                          - очистить свои города");
+        System.out.println("  add_if_max                     - добавить, если больше максимального");
+        System.out.println("  remove_lower                   - удалить все меньшие заданного");
+        System.out.println("  remove_any_by_car_code <code>  - удалить город с указанным carCode");
+        System.out.println("  min_by_coordinates             - город с минимальной координатой X");
+        System.out.println("  print_field_descending_meters_above_sea_level - высоты в порядке убывания");
     }
 
-    /**
-     * Выводит последние 6 введённых команд.
-     */
     private void printHistory() {
-        if (history.isEmpty()) System.out.println("История пуста.");
-        else history.forEach(System.out::println);
+        if (history.isEmpty()) {
+            System.out.println("История пуста.");
+        } else {
+            history.forEach(System.out::println);
+        }
     }
 
-    /**
-     * Выполняет команды из файла-скрипта (CSV-формат с поддержкой экранирования).
-     * <p>
-     * Рекурсивно обрабатывает вложенные команды {@code execute_script}.
-     * Для предотвращения бесконечной рекурсии отслеживаются уже выполняющиеся скрипты.
-     * </p>
-     *
-     * @param filename путь к файлу скрипта
-     */
+    private void printData(Object data) {
+        if (data instanceof Collection<?>) {
+            for (Object obj : (Collection<?>) data) {
+                System.out.println(obj);
+            }
+        } else if (data != null) {
+            System.out.println(data);
+        }
+    }
+
+    private CommandRequest buildRequest(String command, String arg) throws Exception {
+        if (!authenticated) {
+            throw new IllegalStateException("Не выполнена аутентификация");
+        }
+
+        switch (command) {
+            case "info":
+                return new InfoRequest(currentLogin, currentPassword);
+            case "show":
+                return new ShowRequest(currentLogin, currentPassword);
+            case "clear":
+                return new ClearRequest(currentLogin, currentPassword);
+            case "min_by_coordinates":
+                return new MinByCoordinatesRequest(currentLogin, currentPassword);
+            case "print_field_descending_meters_above_sea_level":
+                return new PrintFieldDescendingMetersAboveSeaLevelRequest(currentLogin, currentPassword);
+            case "add": {
+                City city = inputHelper.readCityForAdd();
+                return new AddRequest(city, currentLogin, currentPassword);
+            }
+            case "add_if_max": {
+                City city = inputHelper.readCityForAdd();
+                return new AddIfMaxRequest(city, currentLogin, currentPassword);
+            }
+            case "remove_lower": {
+                City reference = inputHelper.readCityForAdd();
+                return new RemoveLowerRequest(reference, currentLogin, currentPassword);
+            }
+            case "update": {
+                if (arg == null) throw new IllegalArgumentException("Укажите id");
+                long id = Long.parseLong(arg);
+                City city = inputHelper.readCityForAdd();
+                return new UpdateRequest(id, city, currentLogin, currentPassword);
+            }
+            case "remove_by_id": {
+                if (arg == null) throw new IllegalArgumentException("Укажите id");
+                long id = Long.parseLong(arg);
+                return new RemoveByIdRequest(id, currentLogin, currentPassword);
+            }
+            case "remove_any_by_car_code": {
+                if (arg == null) throw new IllegalArgumentException("Укажите carCode");
+                int carCode = Integer.parseInt(arg);
+                return new RemoveAnyByCarCodeRequest(carCode, currentLogin, currentPassword);
+            }
+            default:
+                return new UnknownCommandRequest(command, arg, currentLogin, currentPassword);
+        }
+    }
+
     private void executeScript(String filename) {
         File file = new File(filename);
         if (!file.exists()) {
@@ -167,19 +237,20 @@ public class ConsoleManager {
             return;
         }
         executingScripts.add(filename);
+
         try (Scanner fileScanner = new Scanner(file)) {
             int lineNumber = 0;
             while (fileScanner.hasNextLine()) {
                 String line = fileScanner.nextLine();
                 lineNumber++;
                 if (line.trim().isEmpty() || line.trim().startsWith("#")) continue;
-                System.out.println("> " + line);
 
+                System.out.println("> " + line);
                 try {
                     String[] fields = CsvParser.parseCsvLine(line);
                     if (fields.length == 0) continue;
-                    String cmd = fields[0];
 
+                    String cmd = fields[0];
                     if (cmd.equals("execute_script")) {
                         if (fields.length != 2) {
                             System.out.println("Ошибка: execute_script требует имя файла.");
@@ -204,133 +275,54 @@ public class ConsoleManager {
         }
     }
 
-    /**
-     * Преобразует пользовательский ввод (команду и аргумент) в объект запроса.
-     * <p>
-     * Для команд, требующих города, вызывает {@link InputHelper#readCityForAdd()}.
-     * </p>
-     *
-     * @param command имя команды
-     * @param arg аргумент команды (может быть {@code null})
-     * @return объект запроса для отправки на сервер
-     * @throws Exception при ошибке парсинга аргументов или ввода данных
-     */
-    private CommandRequest buildRequestFromUserInput(String command, String arg) throws Exception {
-        switch (command) {
-            case "info": return new InfoRequest();
-            case "show": return new ShowRequest();
-            case "clear": return new ClearRequest();
-            case "min_by_coordinates": return new MinByCoordinatesRequest();
-            case "print_field_descending_meters_above_sea_level":
-                return new PrintFieldDescendingMetersAboveSeaLevelRequest();
-            case "add": {
-                City city = inputHelper.readCityForAdd();
-                return new AddRequest(city);
-            }
-            case "add_if_max": {
-                City city = inputHelper.readCityForAdd();
-                return new AddIfMaxRequest(city);
-            }
-            case "remove_lower": {
-                City reference = inputHelper.readCityForAdd();
-                return new RemoveLowerRequest(reference);
-            }
-            case "update": {
-                if (arg == null) throw new IllegalArgumentException("Укажите id");
-                long id = Long.parseLong(arg);
-                City city = inputHelper.readCityForAdd();
-                return new UpdateRequest(id, city);
-            }
-            case "remove_by_id": {
-                if (arg == null) throw new IllegalArgumentException("Укажите id");
-                long id = Long.parseLong(arg);
-                return new RemoveByIdRequest(id);
-            }
-            case "remove_any_by_car_code": {
-                if (arg == null) throw new IllegalArgumentException("Укажите carCode");
-                int carCode = Integer.parseInt(arg);
-                return new RemoveAnyByCarCodeRequest(carCode);
-            }
-            default:
-                return new UnknownCommandRequest(command, arg);
-        }
-    }
-
-    /**
-     * Преобразует поля из CSV-строки скрипта в объект запроса.
-     * <p>
-     * Проверяет количество полей и вызывает {@link #parseCityFromFields(String[], int)}
-     * при необходимости создания объекта города.
-     * </p>
-     *
-     * @param command имя команды (первое поле)
-     * @param fields массив всех полей строки (команда + аргументы)
-     * @return запрос для отправки на сервер
-     * @throws Exception при неверном формате, недостатке полей или ошибке парсинга
-     */
     private CommandRequest buildRequestFromScript(String command, String[] fields) throws Exception {
+        if (!authenticated) {
+            throw new IllegalStateException("Не выполнена аутентификация");
+        }
+
         switch (command) {
             case "info":
             case "show":
             case "clear":
             case "min_by_coordinates":
             case "print_field_descending_meters_above_sea_level":
-                if (fields.length != 1) throw new IllegalArgumentException("Команда не должна иметь аргументов");
-                return buildRequestFromUserInput(command, null);
+                if (fields.length != 1) {
+                    throw new IllegalArgumentException("Команда не должна иметь аргументов");
+                }
+                return buildRequest(command, null);
 
             case "remove_by_id":
                 if (fields.length != 2) throw new IllegalArgumentException("Ожидается id");
-                long id = Long.parseLong(fields[1]);
-                return new RemoveByIdRequest(id);
+                return new RemoveByIdRequest(Long.parseLong(fields[1]), currentLogin, currentPassword);
 
             case "remove_any_by_car_code":
                 if (fields.length != 2) throw new IllegalArgumentException("Ожидается carCode");
-                int code = Integer.parseInt(fields[1]);
-                return new RemoveAnyByCarCodeRequest(code);
+                return new RemoveAnyByCarCodeRequest(Integer.parseInt(fields[1]), currentLogin, currentPassword);
 
             case "add":
             case "add_if_max":
             case "remove_lower":
                 if (fields.length != 11) throw new IllegalArgumentException("Ожидается 10 полей города");
                 City city = parseCityFromFields(fields, 1);
-                if (command.equals("add")) return new AddRequest(city);
-                if (command.equals("add_if_max")) return new AddIfMaxRequest(city);
-                return new RemoveLowerRequest(city);
+                if (command.equals("add")) {
+                    return new AddRequest(city, currentLogin, currentPassword);
+                } else if (command.equals("add_if_max")) {
+                    return new AddIfMaxRequest(city, currentLogin, currentPassword);
+                } else {
+                    return new RemoveLowerRequest(city, currentLogin, currentPassword);
+                }
 
             case "update":
                 if (fields.length != 12) throw new IllegalArgumentException("Ожидается id и 10 полей города");
                 long updateId = Long.parseLong(fields[1]);
                 City updateCity = parseCityFromFields(fields, 2);
-                return new UpdateRequest(updateId, updateCity);
+                return new UpdateRequest(updateId, updateCity, currentLogin, currentPassword);
 
             default:
                 throw new IllegalArgumentException("Неизвестная команда: " + command);
         }
     }
 
-    /**
-     * Создаёт объект {@link City} из массива строк, начиная с указанного индекса.
-     * <p>
-     * Ожидает 10 полей в следующем порядке:
-     * <ol start="0">
-     *   <li>name - название города</li>
-     *   <li>x - координата X (целое, >0)</li>
-     *   <li>y - координата Y (число, ≤793)</li>
-     *   <li>area - площадь (число, >0)</li>
-     *   <li>population - население (целое, >0)</li>
-     *   <li>meters - высота над уровнем моря (целое)</li>
-     *   <li>carCode - код автомобиля (целое, 1-1000)</li>
-     *   <li>climate - климат (одно из значений Climate)</li>
-     *   <li>standardOfLiving - уровень жизни (одно из значений StandardOfLiving)</li>
-     *   <li>height - рост губернатора (число, >0, может быть "null")</li>
-     * </ol>
-     * </p>
-     *
-     * @param fields массив всех полей строки
-     * @param start индекс, с которого начинаются поля города
-     * @return объект города, созданный из полей
-     * @throws Exception если парсинг не удался (неверный формат или значение)
-     */
     private City parseCityFromFields(String[] fields, int start) throws Exception {
         try {
             String name = fields[start];
@@ -343,30 +335,12 @@ public class ConsoleManager {
             Climate climate = Climate.valueOf(fields[start + 7].toUpperCase());
             StandardOfLiving sol = StandardOfLiving.valueOf(fields[start + 8].toUpperCase());
             Float height = fields[start + 9].equals("null") ? null : Float.parseFloat(fields[start + 9]);
+
             Coordinates coords = new Coordinates(x, y);
             Human governor = new Human(height);
             return new City(name, coords, area, population, meters, carCode, climate, sol, governor);
         } catch (Exception e) {
             throw new Exception("Ошибка парсинга города: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Выводит данные, полученные от сервера.
-     * <p>
-     * Если данные являются коллекцией, каждый элемент выводится на отдельной строке.
-     * Если данные — одиночный объект, выводится его строковое представление.
-     * </p>
-     *
-     * @param data данные из ответа сервера (может быть {@code null})
-     */
-    private void printData(Object data) {
-        if (data instanceof Collection<?>) {
-            for (Object obj : (Collection<?>) data) {
-                System.out.println(obj);
-            }
-        } else if (data != null) {
-            System.out.println(data);
         }
     }
 }

@@ -1,19 +1,32 @@
 package lab7.common.requests;
 
+import lab7.common.Response;
+import lab7.server.managers.CollectionManager;
+import java.util.List;
+
 /**
  * Запрос на вывод всех значений высоты над уровнем моря в порядке убывания.
- *
- * <p>Запрашивает у сервера список значений {@code metersAboveSeaLevel}
- * всех городов, отсортированный по убыванию.</p>
- *
+ * Выводит высоты всех городов всех пользователей.
  * @author AlMuran
  * @version 1.0
- * @since 1.0
- * @see CommandRequest
- * @see lab7.server.CommandExecutor
  */
 public class PrintFieldDescendingMetersAboveSeaLevelRequest extends AuthenticatedRequest {
+
+    /**
+     * Конструктор запроса высот.
+     * @param login логин пользователя
+     * @param password пароль пользователя
+     */
     public PrintFieldDescendingMetersAboveSeaLevelRequest(String login, String password) {
         super(login, password);
+    }
+
+    @Override
+    public Response execute(CollectionManager collectionManager, long userId) {
+        List<Integer> heights = collectionManager.getMetersAboveSeaLevelDescending();
+        if (heights.isEmpty()) {
+            return new Response(true, "Нет городов", null);
+        }
+        return new Response(true, "Высоты в порядке убывания:", heights);
     }
 }

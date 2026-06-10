@@ -23,8 +23,6 @@ import java.util.List;
  * @author AlMuran
  * @version 1.0
  * @since 1.0
- * @see lab7.server.managers.FileManager
- * @see lab7.client.ConsoleManager
  */
 public final class CsvParser {
 
