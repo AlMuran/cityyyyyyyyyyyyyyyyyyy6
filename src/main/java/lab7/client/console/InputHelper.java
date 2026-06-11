@@ -52,18 +52,18 @@ public class InputHelper {
         return new City(name, coords, area, population, meters, carCode, climate, sol, governor);
     }
 
-    private String readNonEmptyString(String prompt) {
+    private String readNonEmptyString(String data) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             if (!input.isEmpty()) return input;
             System.out.println("Ошибка: строка не может быть пустой.");
         }
     }
 
-    private Long readLong(String prompt, boolean nullable) {
+    private Long readLong(String data, boolean nullable) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             if (nullable && input.isEmpty()) return null;
             try {
@@ -76,9 +76,9 @@ public class InputHelper {
         }
     }
 
-    private double readDouble(String prompt, double max, boolean checkMax) {
+    private double readDouble(String data, double max, boolean checkMax) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             try {
                 double value = Double.parseDouble(input);
@@ -93,9 +93,9 @@ public class InputHelper {
         }
     }
 
-    private Double readDoubleArea(String prompt) {
+    private Double readDoubleArea(String data) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             try {
                 double value = Double.parseDouble(input);
@@ -107,9 +107,9 @@ public class InputHelper {
         }
     }
 
-    private int readIntPopulation(String prompt) {
+    private int readIntPopulation(String data) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             try {
                 int value = Integer.parseInt(input);
@@ -121,9 +121,9 @@ public class InputHelper {
         }
     }
 
-    private int readIntCarCode(String prompt) {
+    private int readIntCarCode(String data) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             try {
                 int value = Integer.parseInt(input);
@@ -135,9 +135,9 @@ public class InputHelper {
         }
     }
 
-    private Float readFloatHeight(String prompt) {
+    private Float readFloatHeight(String data) {
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim();
             if (input.isEmpty()) return null;
             try {
@@ -150,7 +150,7 @@ public class InputHelper {
         }
     }
 
-    private <T extends Enum<T>> T readEnum(Class<T> enumClass, String prompt) {
+    private <T extends Enum<T>> T readEnum(Class<T> enumClass, String data) {
         T[] constants = enumClass.getEnumConstants();
         System.out.print("Доступные значения: ");
         for (int i = 0; i < constants.length; i++) {
@@ -160,7 +160,7 @@ public class InputHelper {
         System.out.println();
 
         while (true) {
-            System.out.print(prompt);
+            System.out.print(data);
             String input = scanner.nextLine().trim().toUpperCase();
             try {
                 return Enum.valueOf(enumClass, input);

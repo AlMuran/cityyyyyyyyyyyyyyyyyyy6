@@ -55,6 +55,7 @@ public class ConsoleManager {
         System.out.println("Добро пожаловать, " + currentLogin + "!");
         System.out.println("Введите 'help' для списка команд.");
 
+        label:
         while (true) {
             System.out.print("> ");
             String line = scanner.nextLine().trim();
@@ -66,30 +67,35 @@ public class ConsoleManager {
 
             addToHistory(command);
 
-            if (command.equals("exit")) {
-                System.out.println("Завершение клиента.");
-                break;
-            } else if (command.equals("help")) {
-                printHelp();
-            } else if (command.equals("history")) {
-                printHistory();
-            } else if (command.equals("execute_script")) {
-                if (argument == null) {
-                    System.out.println("Ошибка: укажите имя файла.");
-                } else {
-                    executeScript(argument);
-                }
-            } else {
-                try {
-                    CommandRequest request = buildRequest(command, argument);
-                    Response response = client.sendRequest(request);
-                    System.out.println(response.getMessage());
-                    if (response.getData() != null) {
-                        printData(response.getData());
+            switch (command) {
+                case "exit":
+                    System.out.println("Завершение клиента.");
+                    break label;
+                case "help":
+                    printHelp();
+                    break;
+                case "history":
+                    printHistory();
+                    break;
+                case "execute_script":
+                    if (argument == null) {
+                        System.out.println("Ошибка: укажите имя файла.");
+                    } else {
+                        executeScript(argument);
                     }
-                } catch (Exception e) {
-                    System.out.println("Ошибка: " + e.getMessage());
-                }
+                    break;
+                default:
+                    try {
+                        CommandRequest request = buildRequest(command, argument);
+                        Response response = client.sendRequest(request);
+                        System.out.println(response.getMessage());
+                        if (response.getData() != null) {
+                            printData(response.getData());
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Ошибка: " + e.getMessage());
+                    }
+                    break;
             }
         }
         client.close();
@@ -169,13 +175,28 @@ public class ConsoleManager {
 
     private void printData(Object data) {
         if (data instanceof Collection<?>) {
-            for (Object obj : (Collection<?>) data) {
-                System.out.println(obj);
+            Collection<?> collection = (Collection<?>) data;
+            if (collection.isEmpty()) {
+                System.out.println("Коллекция пуста");
+                return;
             }
+
+            System.out.println("\n--- Города (" + collection.size() + " шт.) ---");
+            for (Object obj : collection) {
+                if (obj instanceof City) {
+                    City city = (City) obj;
+                    System.out.printf("%d. %s | Население: %d | Площадь: %.1f | CarCode: %d%n",
+                            city.getId(), city.getName(), city.getPopulation(),
+                            city.getArea(), city.getCarCode());
+                }
+            }
+            System.out.println();
+
         } else if (data != null) {
             System.out.println(data);
         }
     }
+
 
     private CommandRequest buildRequest(String command, String arg) throws Exception {
         if (!authenticated) {

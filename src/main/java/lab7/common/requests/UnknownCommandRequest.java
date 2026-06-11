@@ -35,7 +35,6 @@ public class UnknownCommandRequest extends AuthenticatedRequest {
     @Override
     public Response execute(CollectionManager collectionManager, long userId) {
         if ("exit".equalsIgnoreCase(commandName)) {
-            // Завершаем сервер
             System.exit(0);
             return new Response(true, "Сервер остановлен", null);
         }

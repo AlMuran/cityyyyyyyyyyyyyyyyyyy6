@@ -3,7 +3,6 @@ package lab7.server;
 import lab7.server.database.DatabaseManager;
 import lab7.server.database.UserDAO;
 import lab7.server.managers.CollectionManager;
-import lab7.server.utils.DataGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,19 +45,4 @@ public class Main {
         }
     }
 
-    /**
-     * Генерация тестовых данных (300 городов).
-     * Вызывать только при необходимости.
-     */
-    private static void generateTestData(UserDAO userDAO, CollectionManager collectionManager) {
-
-        boolean created = userDAO.registerUser("testuser", "test123");
-        if (created) {
-            long userId = userDAO.authenticateAndGetId("testuser", "test123");
-            if (userId != -1 && collectionManager.getUserCitiesCount(userId) == 0) {
-                DataGenerator.generateCities(userId, 300);
-                logger.info("Сгенерировано 300 тестовых городов для пользователя testuser");
-            }
-        }
-    }
 }
